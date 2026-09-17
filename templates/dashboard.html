@@ -112,15 +112,16 @@
         /* KPI Grid */
         .md-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            margin-bottom: 20px;
-            gap: 14px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 24px;
+            gap: 12px;
         }
 
         .md-kpi-card {
             display: block;
             position: relative;
-            padding: 20px;
+            min-width: 0;
+            padding: 16px 18px;
             overflow: hidden;
             border: 1px solid rgba(128, 128, 128, 0.09);
             border-radius: 16px;
@@ -174,11 +175,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 38px;
-            height: 38px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            font-size: 18px;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 8px;
+            border-radius: 9px;
+            font-size: 16px;
         }
 
         .md-kpi-card__icon--indigo {
@@ -212,23 +213,26 @@
         }
 
         .md-kpi-card__label {
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 11px;
+            margin-bottom: 5px;
+            font-weight: 650;
+            font-size: 10px;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             opacity: 0.5;
         }
 
         .md-kpi-card__value {
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-weight: 800;
-            font-size: 30px;
-            line-height: 1;
+            font-size: 27px;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
         }
 
         .md-kpi-card__sub {
-            font-size: 12px;
+            min-height: 18px;
+            font-size: 11px;
+            line-height: 1.4;
             opacity: 0.6;
         }
 
@@ -2348,11 +2352,22 @@
                         const attSvg   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>';
                         const leaveSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
                         const recruSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
+                        const alertSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 2.8 1.8 17.5A2 2 0 0 0 3.5 20.5h17a2 2 0 0 0 1.7-3L13.7 2.8a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+                        const clockSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
+                        const pendingSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12"/><path d="M6 22h12"/><path d="M18 2c0 4-2 5-6 8 4 3 6 4 6 8"/><path d="M6 2c0 4 2 5 6 8-4 3-6 4-6 8"/></svg>';
+
+                        const overtimeHours = (data.overtime_seconds || 0) / 3600;
+                        const approvedOvertimeHours = (data.approved_overtime_seconds || 0) / 3600;
+
                         document.getElementById('md-kpi-grid').innerHTML =
                             kpiCard("{% url 'employee-view' %}?is_active=True&filter_applied=on",   PERM.employee,    'md-kpi-card__icon--indigo', empSvg,   '{% trans "Total Employees" %}',   data.total_employees,   data.new_joiners > 0 ? '<span class="md-badge md-badge--green">+' + data.new_joiners + ' {% trans "this month" %}</span>' : '<span style="opacity:0.5">{% trans "No new joiners" %}</span>') +
                             kpiCard("{% url 'attendance-view' %}?attendance_date={% now 'Y-m-d' %}&filter_applied=on",  PERM.attendance,  'md-kpi-card__icon--green',  attSvg,   '{% trans "Present Today" %}',     data.present_today,     '<span class="md-badge ' + (data.attendance_rate >= 80 ? 'md-badge--green' : 'md-badge--amber') + '">' + data.attendance_rate + '% {% trans "of expected" %}</span>' + (data.not_checked_in > 0 ? ' <span class="md-badge md-badge--amber">' + data.not_checked_in + ' {% trans "not checked in" %}</span>' : '')) +
                             kpiCard(`{% url 'request-view' %}?status=approved&today_leave=true&filter_applied=on`,     PERM.leave,       'md-kpi-card__icon--amber',  leaveSvg, '{% trans "On Leave" %}',           data.on_leave,          data.pending_leaves > 0 ? '<a href="{% url "request-view" %}?status=requested&filter_applied=on" class="md-badge md-badge--amber">' + data.pending_leaves + ' {% trans "pending" %}</a>' : '<span style="opacity:0.5">{% trans "No pending" %}</span>') +
-                            (PERM.recruitment ? kpiCard("{% url 'recruitment-view' %}?closed=false&filter_applied=on", true, 'md-kpi-card__icon--purple', recruSvg, '{% trans "Open Recruitments" %}', data.open_recruitments, '<span style="opacity:0.5">{% trans "Active hiring" %}</span>') : '');
+                            (PERM.recruitment ? kpiCard("{% url 'recruitment-view' %}?closed=false&filter_applied=on", true, 'md-kpi-card__icon--purple', recruSvg, '{% trans "Open Recruitments" %}', data.open_recruitments, '<span style="opacity:0.5">{% trans "Active hiring" %}</span>') : '') +
+                            kpiCard("{% url 'attendance-view' %}?attendance_date={% now 'Y-m-d' %}&filter_applied=on", PERM.attendance, 'md-kpi-card__icon--amber', alertSvg, '{% trans "Late Today" %}', data.late_today || 0, '<span style="opacity:0.5">{% trans "Late arrivals" %}</span>') +
+                            kpiCard("{% url 'attendance-view' %}?attendance_date={% now 'Y-m-d' %}&filter_applied=on", PERM.attendance, 'md-kpi-card__icon--red', alertSvg, '{% trans "Not Checked In" %}', data.not_checked_in || 0, '<span style="opacity:0.5">{% trans "Expected employees" %}</span>') +
+                            kpiCard("{% url 'attendance-overtime-view' %}", PERM.attendance, 'md-kpi-card__icon--purple', clockSvg, '{% trans "Overtime This Month" %}', overtimeHours.toFixed(1) + 'h', '<span class="md-badge md-badge--green">' + approvedOvertimeHours.toFixed(1) + 'h {% trans "approved" %}</span>') +
+                            kpiCard("{% url 'attendance-overtime-view' %}", PERM.attendance, 'md-kpi-card__icon--amber', pendingSvg, '{% trans "Pending Overtime" %}', data.pending_overtime || 0, '<span style="opacity:0.5">{% trans "Awaiting approval" %}</span>');
                     });
             }
             loadKpiCards();

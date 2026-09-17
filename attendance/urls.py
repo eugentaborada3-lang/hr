@@ -212,6 +212,16 @@ urlpatterns = [
         views.attendance_export,
         name="attendance-info-export",
     ),
+    path(
+        "my-attendance-info-export-form/",
+        views.my_attendance_export,
+        name="my-attendance-info-export-form",
+    ),
+    path(
+        "my-attendance-info-export/",
+        views.my_attendance_export,
+        name="my-attendance-info-export",
+    ),
     # path("attendance-view/", views.attendance_view, name="attendance-view"),
     path(
         "attendance-search/",
@@ -272,6 +282,11 @@ urlpatterns = [
         "attendance-overtime-update/<int:pk>/",
         hour_account.HourAccountFormView.as_view(),
         name="attendance-overtime-update",
+    ),
+    path(
+        "attendance-work-location-update/<int:pk>/",
+        attendances.AttendanceWorkLocationFormView.as_view(),
+        name="attendance-work-location-update",
     ),
     path(
         "attendance-overtime-delete/<int:obj_id>/",
@@ -673,6 +688,21 @@ urlpatterns = [
         "view-my-attendance/",
         my_attendances.MyAttendances.as_view(),
         name="view-my-attendance",
+    ),
+    path(
+        "my-attendance-summary/",
+        my_attendances.MyAttendanceSummary.as_view(),
+        name="my-attendance-summary",
+    ),
+    path(
+        "my-monthly-attendance-summary/",
+        my_attendances.MyMonthlyAttendanceSummary.as_view(),
+        name="my-monthly-attendance-summary",
+    ),
+    path(
+        "my-attendance-calendar/",
+        summary.my_attendance_calendar,
+        name="my-attendance-calendar",
     ),
     path(
         "my-attendance-list/",

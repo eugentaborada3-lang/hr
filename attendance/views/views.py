@@ -100,6 +100,9 @@ from attendance.models import (
 )
 from attendance.views.handle_attendance_errors import handle_attendance_errors
 from attendance.views.process_attendance_data import process_attendance_data
+from base.auth_backends import get_user_groups_for_company
+from horilla.horilla_middlewares import get_selected_company
+
 from base.forms import AttendanceAllowedIPForm, TrackLateComeEarlyOutForm
 from base.methods import (
     choosesubordinates,
@@ -199,6 +202,9 @@ def attendance_tab(request, pk):
     )
     accounts = AttendanceOverTime.objects.filter(employee_id=pk)
     accounts_ids = json.dumps([instance.id for instance in accounts])
+    selected_company = get_selected_company()
+    is_hr_manager = request.user.is_superuser or get_user_groups_for_company(request.user, selected_company).filter(name="HR Manager").exists()
+
 
     context = {
         "requests": requests,
@@ -207,6 +213,7 @@ def attendance_tab(request, pk):
         "accounts_ids": accounts_ids,
         "validate_attendances": validate_attendances,
         "validate_attendances_ids": validate_attendances_ids,
+        "is_hr_manager": is_hr_manager,
     }
     return render(request, "tabs/attendance-tab.html", context=context)
 
@@ -304,6 +311,63 @@ def attendance_import(request):
     }
     html = render_to_string("import_popup.html", context)
     return HttpResponse(html)
+
+
+@login_required
+def my_attendance_export(request):
+    """
+    Export attendance records for the logged-in employee only.
+    Reuses Horilla's existing AttendanceExportForm/export_data machinery.
+    """
+    employee = request.user.employee_get
+
+    if (
+        request.resolver_match
+        and request.resolver_match.url_name == "my-attendance-info-export-form"
+    ):
+        return render(
+            request,
+            "attendance/attendance/export_filter.html",
+            context={
+                "export": AttendanceFilters(
+                    queryset=Attendance.objects.filter(employee_id=employee)
+                ),
+                "export_form": AttendanceExportForm(),
+            },
+        )
+
+    # Restrict the request so the generic exporter cannot export another
+    # employee's attendance through filters, ids, or instance_ids.
+    employee_ids = list(
+        Attendance.objects.filter(employee_id=employee).values_list("id", flat=True)
+    )
+
+    request.GET = request.GET.copy()
+
+    # Force every export request to the logged-in employee.
+    # This prevents employee/employee_id filters from selecting another employee.
+    request.GET["employee"] = str(employee.id)
+    request.GET["employee_id"] = str(employee.id)
+
+    if request.GET.get("instance_ids"):
+        import ast
+
+        try:
+            requested_ids = ast.literal_eval(request.GET.get("instance_ids"))
+            safe_ids = [obj_id for obj_id in requested_ids if obj_id in employee_ids]
+            request.GET["instance_ids"] = str(safe_ids)
+        except (ValueError, SyntaxError, TypeError):
+            request.GET["instance_ids"] = "[]"
+
+    request.GET["ids"] = str(employee_ids)
+
+    return export_data(
+        request=request,
+        model=Attendance,
+        filter_class=AttendanceFilters,
+        form_class=AttendanceExportForm,
+        file_name="My_Attendance_export",
+    )
 
 
 @login_required
@@ -417,6 +481,7 @@ def attendance_view(request):
             #     ot_attendances, request.GET.get("opage")
             # ),
             "validate_attendances_ids": validate_attendances_ids,
+        "is_hr_manager": is_hr_manager,
             "ot_attendances_ids": ot_attendances_ids,
             "attendances_ids": attendances_ids,
             "f": filter_obj,
@@ -501,6 +566,9 @@ def attendance_delete(request, obj_id):
                 overtime.overtime = format_time(total_overtime)
                 overtime.save()
         try:
+            # Remove HR attendance exception records first because
+            # AttendanceLateComeEarlyOut protects the Attendance row.
+            attendance.late_come_early_out.all().delete()
             attendance.delete()
             messages.success(request, _("Attendance deleted."))
         except ProtectedError as e:
@@ -1360,6 +1428,12 @@ def validate_bulk_attendance(request):
     """
     This method is used to validate a bulk of attendances.
     """
+    selected_company = get_selected_company()
+    hr_groups = get_user_groups_for_company(request.user, selected_company)
+    if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+        messages.error(request, _("Only HR Managers can validate attendance."))
+        return JsonResponse({"message": "error"}, status=403)
+
     ids = json.loads(request.POST["ids"])
     validate_req_count = 0
     success_messages = []
@@ -1447,6 +1521,12 @@ def validate_this_attendance(request, obj_id):
     """
     try:
         attendance = Attendance.objects.get(id=obj_id)
+        selected_company = get_selected_company()
+        hr_groups = get_user_groups_for_company(request.user, selected_company)
+        if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+            messages.error(request, _("Only HR Managers can validate attendance."))
+            return attendance_view_redirect(request)
+
         if not request.user.is_superuser:
             if attendance.employee_id.id == request.user.employee_get.id:
                 messages.error(request, _("You cannot validate your own attendance."))
@@ -1541,10 +1621,17 @@ def approve_overtime(request, obj_id):
     """
     This method is used to approve attendance overtime
     args:
+
         obj_id  : attendance id
     """
     try:
         attendance = Attendance.objects.get(id=obj_id)
+        selected_company = get_selected_company()
+        hr_groups = get_user_groups_for_company(request.user, selected_company)
+        if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+            messages.error(request, _("Only HR Managers can approve overtime."))
+            return attendance_view_redirect(request)
+
         if not request.user.is_superuser:
             if attendance.employee_id.id == request.user.employee_get.id:
                 messages.error(request, _("You cannot approve your own overtime."))
@@ -1589,6 +1676,12 @@ def approve_bulk_overtime(request):
     """
     This method is used to approve bulk of attendance
     """
+    selected_company = get_selected_company()
+    hr_groups = get_user_groups_for_company(request.user, selected_company)
+    if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+        messages.error(request, _("Only HR Managers can approve overtime."))
+        return JsonResponse({"message": "error"}, status=403)
+
     ids = json.loads(request.POST.get("ids", "[]"))
     otapprove_ids = []
     filtered_ids = []

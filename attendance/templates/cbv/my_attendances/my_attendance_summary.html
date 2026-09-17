@@ -1,0 +1,88 @@
+{% load i18n %}
+
+<div class="oh-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">{% trans "Today's Attendance" %}</h5>
+            <span class="text-muted">{{ today|date:"F d, Y" }}</span>
+        </div>
+
+        {% if attendance and not attendance.attendance_clock_out %}
+            <span class="badge bg-success">{% trans "Currently Working" %}</span>
+        {% elif attendance %}
+            <span class="badge bg-secondary">{% trans "Completed" %}</span>
+        {% else %}
+            <span class="badge bg-warning text-dark">{% trans "No Attendance" %}</span>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Check-In" %}</div>
+            <div class="fw-bold">
+                {% if attendance and attendance.attendance_clock_in %}
+                    {{ attendance.attendance_clock_in|time:"h:i A" }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Check-Out" %}</div>
+            <div class="fw-bold">
+                {% if attendance and attendance.attendance_clock_out %}
+                    {{ attendance.attendance_clock_out|time:"h:i A" }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Worked Hours" %}</div>
+            <div class="fw-bold">
+                {% if attendance and attendance.attendance_worked_hour %}
+                    {{ attendance.attendance_worked_hour }}
+                {% else %}
+                    00:00
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Status" %}</div>
+            <div class="fw-bold">
+                {% if work_record %}
+                    {{ work_record.get_work_record_type_display }}
+                {% elif attendance %}
+                    {% trans "Attendance Recorded" %}
+                {% else %}
+                    {% trans "No Record" %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Late Arrival" %}</div>
+            <div class="fw-bold">
+                {% if is_late %}
+                    {% trans "Yes" %}
+                {% else %}
+                    {% trans "No" %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="text-muted small">{% trans "Early Departure" %}</div>
+            <div class="fw-bold">
+                {% if is_early %}
+                    {% trans "Yes" %}
+                {% else %}
+                    {% trans "No" %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

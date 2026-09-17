@@ -1,0 +1,150 @@
+{% load i18n %}
+
+<style>
+    .my-ms-stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        margin-bottom: 1rem;
+    }
+
+    .my-ms-stat-card {
+        flex: 0 1 160px;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 14px 18px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    body.dark .my-ms-stat-card {
+        background: #1a1a1a;
+        border-color: #444;
+    }
+
+    .my-ms-label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+
+    body.dark .my-ms-label {
+        color: #bbb;
+    }
+
+    .my-ms-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .my-ms-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .my-ms-controls-title {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .my-ms-month-input {
+        min-width: 160px;
+    }
+</style>
+
+<div class="oh-card p-4 mb-4">
+    <div class="my-ms-controls">
+        <div>
+            <div class="my-ms-controls-title">{% trans "Monthly Attendance Summary" %}</div>
+            <div class="text-muted small">{{ month_label }}</div>
+        </div>
+
+        <form
+            hx-get="{% url 'my-monthly-attendance-summary' %}"
+            hx-target="#myMonthlyAttendanceSummary"
+            hx-swap="innerHTML"
+            class="d-flex align-items-center gap-2"
+        >
+            <label for="my-ms-month" class="small text-muted mb-0">
+                {% trans "Month" %}
+            </label>
+            <input
+                id="my-ms-month"
+                class="form-control my-ms-month-input"
+                type="month"
+                name="month"
+                value="{{ month_value }}"
+            >
+            <button type="submit" class="oh-btn oh-btn--secondary">
+                {% trans "View" %}
+            </button>
+        </form>
+    </div>
+
+    <div class="my-ms-stat-row">
+        <div class="my-ms-stat-card" style="border-top: 3px solid #28a745;">
+            <div class="my-ms-label">{% trans "Total Present" %}</div>
+            <p class="my-ms-value" style="color:#28a745;">{{ total_present }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #ffc107;">
+            <div class="my-ms-label">{% trans "Half Days" %}</div>
+            <p class="my-ms-value" style="color:#d39e00;">{{ half_days }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #dc3545;">
+            <div class="my-ms-label">{% trans "Absent" %}</div>
+            <p class="my-ms-value" style="color:#dc3545;">{{ absent }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #0d6efd;">
+            <div class="my-ms-label">{% trans "Approved Leave" %}</div>
+            <p class="my-ms-value" style="color:#0d6efd;">{{ approved_leave }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #20c997;">
+            <div class="my-ms-label">{% trans "Holidays / Week Offs" %}</div>
+            <p class="my-ms-value" style="color:#20c997;">{{ holiday_week_off }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #6610f2;">
+            <div class="my-ms-label">{% trans "Total Worked Hours" %}</div>
+            <p class="my-ms-value" style="color:#6610f2;">
+                {{ worked_label }}
+            </p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #fd7e14;">
+            <div class="my-ms-label">{% trans "Overtime Recorded" %}</div>
+            <p class="my-ms-value" style="color:#fd7e14;">
+                {{ overtime_label }}
+            </p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #198754;">
+            <div class="my-ms-label">{% trans "Overtime Approved" %}</div>
+            <p class="my-ms-value" style="color:#198754;">
+                {{ approved_overtime_label }}
+            </p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #6f42c1;">
+            <div class="my-ms-label">{% trans "Late Arrivals" %}</div>
+            <p class="my-ms-value" style="color:#6f42c1;">{{ late_arrivals }}</p>
+        </div>
+
+        <div class="my-ms-stat-card" style="border-top: 3px solid #e83e8c;">
+            <div class="my-ms-label">{% trans "Early Departures" %}</div>
+            <p class="my-ms-value" style="color:#e83e8c;">{{ early_departures }}</p>
+        </div>
+    </div>
+</div>

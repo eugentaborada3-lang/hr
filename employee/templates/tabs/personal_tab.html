@@ -1,4 +1,51 @@
 {% load i18n %} {% load static %} {% load horillafilters %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="oh-card oh-card--margin">
+            <div class="oh-card__body">
+                <div class="row">
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Present This Month" %}</div>
+                            <div class="h4 mb-0">{{ present_days }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Half Days" %}</div>
+                            <div class="h4 mb-0">{{ half_days }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Open Goals" %}</div>
+                            <div class="h4 mb-0">{{ open_goals }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Goal Progress" %}</div>
+                            <div class="h4 mb-0">{{ goal_progress }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-sm-0">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Pending Leave" %}</div>
+                            <div class="h4 mb-0">{{ pending_leave }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-2">
+                        <div class="p-3 border rounded h-100">
+                            <div class="text-muted small">{% trans "Remaining Leave" %}</div>
+                            <div class="h4 mb-0">{{ remaining_leave }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
 	<div class="col-sm-12 col-md-12 col-lg-4">
 		<div class="oh-card oh-card--margin">

@@ -43,7 +43,6 @@ from base.context_processors import (
 from base.models import AttendanceAllowedIP, Company, EmployeeShiftDay
 from horilla.decorators import hx_request_required, login_required
 from horilla.horilla_middlewares import _thread_locals
-from notifications.signals import notify
 
 
 def late_come_create(attendance):
@@ -388,8 +387,7 @@ def clock_out_attendance_and_activity(employee, date_today, now, out_datetime=No
         attendance.attendance_overtime = overtime_calculation(attendance)
 
         # Validate the attendance as per the condition
-        # Attendance validation is HR-only; employee checkout must not auto-validate.
-        attendance.attendance_validated = False
+        attendance.attendance_validated = attendance_validate(attendance)
         attendance.save()
 
         return attendance
@@ -594,39 +592,6 @@ def clock_out(request):
                         end_time=end_time_sec,
                         shift=shift,
                     )
-
-        # Notify the employee immediately when the completed checkout contains overtime.
-        if attendance and attendance.attendance_overtime:
-            try:
-                overtime_seconds = strtime_seconds(attendance.attendance_overtime)
-            except (TypeError, ValueError):
-                overtime_seconds = 0
-
-            if overtime_seconds > 0:
-                employee_user = attendance.employee_id.employee_user_id
-                if employee_user:
-                    from notifications.models import Notification
-
-                    verb = (
-                        f"Overtime Recorded: {attendance.attendance_overtime} "
-                        f"on {attendance.attendance_date}"
-                    )
-
-                    already_sent = Notification.objects.filter(
-                        recipient=employee_user,
-                        verb=verb,
-                        timestamp__date=attendance.attendance_date,
-                    ).exists()
-
-                    if not already_sent:
-                        notify.send(
-                            attendance.employee_id,
-                            recipient=employee_user,
-                            verb=verb,
-                            verb_en=verb,
-                            redirect="/attendance/view-my-attendance/",
-                            icon="time-outline",
-                        )
 
         # Refresh employee from DB so template re-evaluates is_clocked_in correctly
         employee.refresh_from_db()

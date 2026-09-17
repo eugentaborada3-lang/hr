@@ -465,6 +465,13 @@ def search_attendance_requests(request):
     else:
         requests = paginator_qry(requests, request.GET.get("rpage"))
         attendances = paginator_qry(attendances, request.GET.get("page"))
+    selected_company = get_selected_company()
+    hr_groups = get_user_groups_for_company(request.user, selected_company)
+    is_hr_manager = (
+        request.user.is_superuser
+        or hr_groups.filter(name="HR Manager").exists()
+    )
+
     return render(
         request,
         template,
@@ -476,6 +483,7 @@ def search_attendance_requests(request):
             "pd": previous_data,
             "filter_dict": data_dict,
             "field": field,
+            "is_hr_manager": is_hr_manager,
         },
     )
 

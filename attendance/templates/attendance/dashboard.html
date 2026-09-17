@@ -1404,6 +1404,14 @@
             // ═══════════════════════════════════════════
             //  DATA FETCHES
             // ═══════════════════════════════════════════
+            document.body.addEventListener("reloadAttendanceView", function () {
+                if (typeof refreshAllData === "function") {
+                    lastRefresh = Date.now();
+                    updateRefreshText();
+                    refreshAllData();
+                }
+            });
+
 
             // ─── KPI CARDS ───
             function loadKpiCards() {

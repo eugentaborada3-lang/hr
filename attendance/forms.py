@@ -107,6 +107,7 @@ class AttendanceUpdateForm(BaseModelForm):
             "attendance_clock_out_date": DateTimeInput(attrs={"type": "date"}),
             "attendance_date": DateTimeInput(attrs={"type": "date"}),
             "attendance_clock_in_date": DateTimeInput(attrs={"type": "date"}),
+            "work_location": forms.Select(choices=[("onsite", "On-site"), ("wfh", "Work From Home")]),
         }
 
     def update_worked_hour_hx_fields(self, field_name):
@@ -252,6 +253,7 @@ class AttendanceForm(BaseModelForm):
             "attendance_clock_out_date": DateTimeInput(attrs={"type": "date"}),
             "attendance_date": DateTimeInput(attrs={"type": "date"}),
             "attendance_clock_in_date": DateTimeInput(attrs={"type": "date"}),
+            "work_location": forms.Select(choices=[("onsite", "On-site"), ("wfh", "Work From Home")]),
         }
 
     def update_worked_hour_hx_fields(self, field_name):
@@ -411,6 +413,25 @@ class AttendanceForm(BaseModelForm):
             raise ValidationError(_("Employee not chosen"))
 
         return employee.first()
+
+
+class AttendanceWorkLocationForm(BaseModelForm):
+    """
+    HR-only form for updating the work location of an attendance record.
+    This intentionally contains no check-in, check-out, or attendance fields.
+    """
+
+    class Meta:
+        model = Attendance
+        fields = ["work_location"]
+        widgets = {
+            "work_location": forms.Select(
+                choices=[
+                    ("onsite", _("On-site")),
+                    ("wfh", _("Work From Home")),
+                ]
+            ),
+        }
 
 
 class AttendanceActivityForm(BaseModelForm):

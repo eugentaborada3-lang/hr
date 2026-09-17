@@ -18,8 +18,14 @@ from attendance.cbv.attendance_activity import AttendanceActivityListView
 from attendance.cbv.attendance_tab import AttendanceTabView
 from attendance.cbv.tab_shell import AttendanceTabContentShell
 from attendance.filters import AttendanceFilters
-from attendance.forms import AttendanceExportForm, AttendanceForm, AttendanceUpdateForm
+from attendance.forms import (
+    AttendanceExportForm,
+    AttendanceForm,
+    AttendanceUpdateForm,
+    AttendanceWorkLocationForm,
+)
 from attendance.models import Attendance, AttendanceValidationCondition, strtime_seconds
+from base.auth_backends import get_user_groups_for_company
 from base.decorators import manager_can_enter
 from base.filters import PenaltyFilter
 from base.methods import (
@@ -34,6 +40,7 @@ from employee.cbv.employees import EmployeeCard, EmployeeNav, EmployeesList
 from employee.filters import EmployeeFilter
 from employee.models import Employee
 from horilla.filters import HorillaFilterSet
+from horilla.horilla_middlewares import get_selected_company
 from horilla_views.cbv_methods import (
     hx_request_required,
     login_required,
@@ -725,6 +732,43 @@ class AttendanceUpdateFormView(HorillaFormView):
             message = _("Attandance Updated")
             form.save()
             messages.success(self.request, message)
+            return self.HttpResponse(
+                script="if(typeof refreshAttendanceListContainer==='function'){refreshAttendanceListContainer();}"
+            )
+        return super().form_valid(form)
+
+
+@method_decorator(login_required, name="dispatch")
+class AttendanceWorkLocationFormView(HorillaFormView):
+    """
+    HR-only form for updating the work location of an attendance record.
+    """
+
+    model = Attendance
+    form_class = AttendanceWorkLocationForm
+    new_display_title = _("Work Location")
+
+    def dispatch(self, request, *args, **kwargs):
+        selected_company = get_selected_company()
+        hr_groups = get_user_groups_for_company(request.user, selected_company)
+
+        if not request.user.is_superuser and not hr_groups.filter(
+            name="HR Manager"
+        ).exists():
+            return HttpResponse(_("Only HR Managers can update work location."), status=403)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.form_class.verbose_name = _("Work Location")
+        context["view_id"] = "attendanceWorkLocation"
+        return context
+
+    def form_valid(self, form: AttendanceWorkLocationForm) -> HttpResponse:
+        if form.is_valid():
+            form.save()
+            messages.success(self.request, _("Work location updated successfully."))
             return self.HttpResponse(
                 script="if(typeof refreshAttendanceListContainer==='function'){refreshAttendanceListContainer();}"
             )

@@ -35,6 +35,50 @@
 
     <div hx-get="{% url 'my-attendance-nav' %}?{{ request.GET.urlencode }}" hx-trigger="load"></div>
 
+    <div hx-get="{% url 'my-attendance-summary' %}" hx-trigger="load" hx-swap="outerHTML"></div>
+
+    <div id="myMonthlyAttendanceSummary" hx-get="{% url 'my-monthly-attendance-summary' %}" hx-trigger="load" hx-swap="innerHTML"></div>
+
+    <div id="myAttendanceCalendar" hx-get="{% url 'my-attendance-calendar' %}" hx-trigger="load" hx-swap="innerHTML"></div>
+
+
+    <div class="d-flex justify-content-end mb-3">
+        <a
+            href="{% url 'my-attendance-info-export-form' %}"
+            class="oh-btn oh-btn--secondary"
+            data-toggle="oh-modal-toggle"
+            data-target="#genericModal"
+            hx-get="{% url 'my-attendance-info-export-form' %}"
+            hx-target="#genericModalBody"
+        >
+            <ion-icon name="download-outline"></ion-icon>
+            {% trans "Export Attendance" %}
+        </a>
+    </div>
+
+
+    <div class="oh-modal" id="activityViewModal" role="dialog" aria-hidden="true" style="z-index: 1100;">
+        <div class="oh-modal__dialog" style="max-width: 900px;">
+            <div class="oh-modal__dialog-header">
+                <h3 class="oh-main__titlebar-title fw-bold">
+                    {% trans "Activities" %}
+                </h3>
+                <button
+                    class="oh-modal__close--custom"
+                    aria-label="{% trans 'Close' %}"
+                    onclick="$(this).closest('.oh-modal--show').removeClass('oh-modal--show')"
+                >
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            <div
+                class="oh-modal__dialog-body"
+                id="activityViewModalBody"
+                style="overflow-x: auto;"
+            ></div>
+        </div>
+    </div>
+
     {% include "generic/components.html" %}
 
     <div

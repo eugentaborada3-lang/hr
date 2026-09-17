@@ -2,8 +2,6 @@
 
 {% if request.user.employee_get %}
     {% with get_forecasted_at_work=request.user.employee_get.get_forecasted_at_work %}
-        {% now "w" as current_weekday %}
-        {% if current_weekday != "0" and current_weekday != "6" %}
                 {% if request.user|is_clocked_in and get_forecasted_at_work.has_attendance %}
                     {% comment %} <button class="check checkout" hx-get="{% url 'clock-out' %}"  hx-target='#attendance-activity-container' hx-swap='innerHTML'>
                         <span class="date">
@@ -100,6 +98,7 @@
                         </script>
                     {% endif %}
                 {% endif %}
+            {% endif %}
         {% endif %}
     {% endwith %}
 {% endif %}

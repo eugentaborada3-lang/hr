@@ -1690,6 +1690,41 @@ def _build_calendar_context(emp, from_date, to_date):
 
 @login_required
 @hx_request_required
+def my_attendance_calendar(request):
+    """
+    Employee attendance calendar for the logged-in employee.
+    Uses the existing monthly calendar/status engine.
+    """
+    employee = request.user.employee_get
+    today = timezone.localdate()
+
+    month_value = request.GET.get("month", today.strftime("%Y-%m"))
+
+    try:
+        selected_month = datetime.datetime.strptime(month_value, "%Y-%m").date()
+    except ValueError:
+        selected_month = today.replace(day=1)
+
+    from calendar import monthrange
+
+    from_date = selected_month.replace(day=1)
+    to_date = selected_month.replace(
+        day=monthrange(selected_month.year, selected_month.month)[1]
+    )
+
+    if selected_month.year == today.year and selected_month.month == today.month:
+        to_date = today
+
+    context = _build_calendar_context(employee, from_date, to_date)
+    return render(
+        request,
+        "attendance/monthly_summary/calendar_modal.html",
+        context,
+    )
+
+
+@login_required
+@hx_request_required
 def attendance_monthly_summary_calendar(request):
     """
     HTMX calendar modal — full month-by-month view of every day's status

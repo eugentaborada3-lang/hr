@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 from xhtml2pdf import pisa
 
+from base.auth_backends import get_user_groups_for_company
 from base.filters import PenaltyFilter
 from base.forms import PenaltyAccountForm
 from base.methods import (
@@ -52,6 +53,7 @@ from horilla.decorators import (
     permission_required,
 )
 from horilla.group_by import group_by_queryset
+from horilla.horilla_middlewares import get_selected_company
 from horilla.http.response import HorillaRedirect
 from horilla.methods import get_horilla_model_class, remove_dynamic_url
 from leave.decorators import *
@@ -1016,6 +1018,24 @@ def leave_request_approve(request, id, emp_id=None):
             request, message=_("No leave rquest found matching the query.")
         )
     employee_id = leave_request.employee_id
+
+    selected_company = get_selected_company()
+    hr_groups = get_user_groups_for_company(request.user, selected_company)
+    if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+        messages.error(request, _("Only HR Managers can approve leave requests."))
+        if request.headers.get("HX-Request"):
+            response = HttpResponse("", status=403)
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "horillaMessage": {
+                        "level": "error",
+                        "text": str(_("Only HR Managers can approve leave requests.")),
+                    }
+                }
+            )
+            return response
+        return HorillaRedirect(request)
+
     if not request.user.is_superuser:
         if employee_id == request.user.employee_get:
             messages.error(request, _("You cannot approve your own leave request."))
@@ -1181,6 +1201,23 @@ def leave_request_approve(request, id, emp_id=None):
 @manager_can_enter("leave.change_leaverequest")
 def leave_request_bulk_approve(request):
     if request.method == "POST":
+        selected_company = get_selected_company()
+        hr_groups = get_user_groups_for_company(request.user, selected_company)
+        if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+            messages.error(request, _("Only HR Managers can approve leave requests."))
+            if request.headers.get("HX-Request"):
+                response = HttpResponse("", status=403)
+                response["HX-Trigger"] = json.dumps(
+                    {
+                        "horillaMessage": {
+                            "level": "error",
+                            "text": str(_("Only HR Managers can approve leave requests.")),
+                        }
+                    }
+                )
+                return response
+            return HorillaRedirect(request)
+
         request_ids = request.POST.getlist("ids")
         filtered_ids = []
         for request_id in request_ids:
@@ -1231,6 +1268,23 @@ def leave_request_bulk_approve(request):
 @login_required
 @manager_can_enter("leave.change_leaverequest")
 def leave_bulk_reject(request):
+    selected_company = get_selected_company()
+    hr_groups = get_user_groups_for_company(request.user, selected_company)
+    if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+        messages.error(request, _("Only HR Managers can reject leave requests."))
+        if request.headers.get("HX-Request"):
+            response = HttpResponse("", status=403)
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "horillaMessage": {
+                        "level": "error",
+                        "text": str(_("Only HR Managers can reject leave requests.")),
+                    }
+                }
+            )
+            return response
+        return HorillaRedirect(request)
+
     request_ids = request.POST.getlist("request_ids")
 
     for request_id in request_ids:
@@ -1264,6 +1318,22 @@ def leave_request_cancel(request, id, emp_id=None):
         form = RejectForm(request.POST)
         if form.is_valid():
             leave_request = LeaveRequest.objects.get(id=id)
+
+            selected_company = get_selected_company()
+            hr_groups = get_user_groups_for_company(request.user, selected_company)
+            if not hr_groups.filter(name="HR Manager").exists() and not request.user.is_superuser:
+                messages.error(request, _("Only HR Managers can reject leave requests."))
+                response = HttpResponse("", status=403)
+                response["HX-Trigger"] = json.dumps(
+                    {
+                        "horillaMessage": {
+                            "level": "error",
+                            "text": str(_("Only HR Managers can reject leave requests.")),
+                        }
+                    }
+                )
+                return response
+
             employee_id = leave_request.employee_id
             leave_type_id = leave_request.leave_type_id
             available_leave = AvailableLeave.objects.get(

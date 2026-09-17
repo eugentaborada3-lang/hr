@@ -77,7 +77,7 @@
                                         {% trans "Overtime" %}
                                     </div>
                                     <div class="oh-sticky-table__th oh-sticky-table__right" style="width:115px;">{% trans "Comment" %}</div>
-                                    {% if perms.attendance.change_validateattendance or request.user|is_reportingmanager %}
+                                    {% if is_hr_manager %}
                                     <div class="oh-sticky-table__th oh-sticky-table__right">{% trans "Actions" %}</div>
                                     {% endif %}
                                 </div>
@@ -167,7 +167,7 @@
                                                     aria-label="{% trans 'newspaper outline' %}"></ion-icon>
                                             </button>
                                         </div>
-                                        {% if perms.attendance.change_validateattendance or request.user|is_reportingmanager %}
+                                        {% if is_hr_manager %}
                                         <div class="oh-sticky-table__td oh-sticky-table__right">
                                             <div class="oh-btn-group">
                                                 <a class="oh-btn oh-btn--light-bkg w-100" title="{% trans 'View' %}"><ion-icon

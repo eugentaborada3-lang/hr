@@ -336,30 +336,48 @@ def currency_symbol_position(amount):
 @register.filter(name="is_check_in_enabled")
 def is_check_in_enabled(request):
     """
-    This method checks whether the check-in/check-out feature is enabled.
+    Check whether manual check-in/check-out is enabled.
+
+    Employees without a company use the global attendance setting.
+    Employees with a company use that company's attendance setting.
     """
     from attendance.models import AttendanceGeneralSetting
 
-    selected_company = request.session.get("selected_company")
-    if not selected_company:
-        return False  # Safeguard if session key is missing
+    employee = getattr(request.user, "employee_get", None)
+    work_info = getattr(employee, "employee_work_info", None)
+    employee_company = getattr(work_info, "company_id", None)
 
-    # Fetch the settings based on the selected company
+    # Company-less employee: use the global attendance setting.
+    if employee_company is None:
+        attendance_settings = (
+            AttendanceGeneralSetting.objects.filter(company_id=None)
+            .first()
+        )
+        return bool(
+            attendance_settings and attendance_settings.enable_check_in
+        )
+
+    selected_company = request.session.get("selected_company")
+
+    # "All my companies": use the global setting.
     if selected_company == "all":
-        attendance_settings = AttendanceGeneralSetting.objects.filter(
-            company_id=None
-        ).first()
+        attendance_settings = (
+            AttendanceGeneralSetting.objects.filter(company_id=None)
+            .first()
+        )
     else:
         company = Company.objects.filter(id=selected_company).first()
         if not company:
-            return False  # Return False if the company doesn't exist
-        attendance_settings = AttendanceGeneralSetting.objects.filter(
-            company_id=company
-        ).first()
+            return False
 
-    # Check if check-in is enabled
-    return bool(attendance_settings and attendance_settings.enable_check_in)
+        attendance_settings = (
+            AttendanceGeneralSetting.objects.filter(company_id=company)
+            .first()
+        )
 
+    return bool(
+        attendance_settings and attendance_settings.enable_check_in
+    )
 
 @register.filter(name="is_timerunner_enabled")
 def is_timerunner_enabled(request):

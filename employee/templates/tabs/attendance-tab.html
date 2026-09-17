@@ -55,7 +55,7 @@
                                 <div class="oh-sticky-table__th">{% trans "Min Hour" %}</div>
                                 <div class="oh-sticky-table__th">{% trans "At Work" %}</div>
                                 <div class="oh-sticky-table__th">{% trans "Overtime" %}</div>
-                                {% if request.user|is_reportingmanager or perms.attendance.change_attendance %}
+                                {% if is_hr_manager %}
                                     <div class="oh-sticky-table__th oh-sticky-table__right">{% trans "Actions" %}</div>
                                 {% endif %}
                             </div>
@@ -118,7 +118,7 @@
                                         <div class="oh-sticky-table__td {% if 'attendance_overtime' in attendance.requested_fields or attendance.request_type == 'create_request' %} diff-cell{% endif %}">
                                             {{ attendance.attendance_overtime }}
                                         </div>
-                                        {% if request.user|is_reportingmanager or perms.attendance.change_attendance %}
+                                        {% if is_hr_manager %}
                                             <div
                                                 class="oh-sticky-table__td oh-sticky-table__right"
                                                 onclick="event.stopPropagation()"
@@ -424,7 +424,7 @@
                                             </div>
                                         </div>
                                         <div class="oh-sticky-table__td" onclick="event.stopPropagation()">
-                                            {% if request.user|is_reportingmanager or perms.attendance.change_attendance %}
+                                            {% if is_hr_manager %}
                                                 <a
                                                     href='{% url "validate-this-attendance" attendance.id %}'
                                                     hx-target="#updateAttendanceBody"

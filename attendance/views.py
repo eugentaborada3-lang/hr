@@ -830,8 +830,8 @@ def clock_out_attendance_and_activity(employee, date_today, now):
     # Overtime calculation
     attendance.attendance_overtime = overtime_calculation(attendance)
 
-    # Validate the attendance as per the condition
-    attendance.attendance_validated = attendance_validate(attendance)
+    # Attendance validation is HR-only; employee checkout must not auto-validate.
+    attendance.attendance_validated = False
     attendance.save()
 
     return

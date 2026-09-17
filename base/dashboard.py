@@ -544,6 +544,43 @@ def dashboard_kpi_data(request):
     except Exception:
         pass
 
+    # Executive attendance KPIs.
+    late_today = 0
+    overtime_seconds = 0
+    approved_overtime_seconds = 0
+    pending_overtime = 0
+
+    try:
+        from django.db.models import Sum
+        from attendance.models import Attendance, AttendanceLateComeEarlyOut
+
+        late_qs = AttendanceLateComeEarlyOut.objects.filter(
+            attendance_id__attendance_date=real_today,
+            type="late_come",
+            employee_id__in=emp_qs,
+        )
+        late_today = late_qs.values("employee_id").distinct().count()
+
+        overtime_qs = Attendance.objects.filter(
+            attendance_date__gte=first_of_month,
+            attendance_date__lte=today,
+            employee_id__in=emp_qs,
+            attendance_validated=True,
+            overtime_second__gt=0,
+        )
+
+        overtime_agg = overtime_qs.aggregate(
+            total_overtime=Sum("overtime_second"),
+            approved_overtime=Sum("approved_overtime_second"),
+        )
+        overtime_seconds = int(overtime_agg["total_overtime"] or 0)
+        approved_overtime_seconds = int(overtime_agg["approved_overtime"] or 0)
+        pending_overtime = overtime_qs.filter(
+            attendance_overtime_approve=False
+        ).count()
+    except Exception:
+        pass
+
     return JsonResponse(
         {
             "total_employees": total_employees,
@@ -556,6 +593,10 @@ def dashboard_kpi_data(request):
             "pending_leaves": pending_leaves,
             "new_joiners": new_joiners,
             "open_recruitments": open_recruitments,
+            "late_today": late_today,
+            "overtime_seconds": overtime_seconds,
+            "approved_overtime_seconds": approved_overtime_seconds,
+            "pending_overtime": pending_overtime,
             "date": today.isoformat(),
             "is_team_scoped": scoped_ids is not None,
         }

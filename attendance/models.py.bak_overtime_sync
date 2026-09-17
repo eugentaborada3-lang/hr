@@ -232,12 +232,6 @@ class Attendance(HorillaModel):
         on_delete=models.SET_NULL,  # 796
         verbose_name=_("Work Type"),
     )
-    work_location = models.CharField(
-        max_length=20,
-        choices=[("onsite", _("On-site")), ("wfh", _("Work From Home"))],
-        default="onsite",
-        verbose_name=_("Work Location"),
-    )
     attendance_day = models.ForeignKey(
         EmployeeShiftDay,
         on_delete=models.DO_NOTHING,
@@ -820,30 +814,13 @@ class Attendance(HorillaModel):
 
         super().save(*args, **kwargs)
 
+        if diff_work == diff_approved_ot == diff_pending == 0:
+            return
+
         month = self.attendance_date.strftime("%B").lower()
         year = self.attendance_date.year
 
         with transaction.atomic():
-            month_attendances = Attendance.objects.filter(
-                employee_id=self.employee_id,
-                attendance_date__month=self.attendance_date.month,
-                attendance_date__year=self.attendance_date.year,
-                attendance_validated=True,
-            )
-
-            hour_account_second = 0
-            hour_pending_second = 0
-            overtime_second = 0
-
-            for attendance in month_attendances:
-                required_work_second = strtime_seconds(attendance.minimum_hour)
-                at_work_second = attendance.at_work_second or 0
-                credited_work_second = min(required_work_second, at_work_second)
-
-                hour_account_second += credited_work_second
-                hour_pending_second += max(0, required_work_second - at_work_second)
-                overtime_second += attendance.overtime_second or 0
-
             ot, _ = AttendanceOverTime.objects.get_or_create(
                 employee_id=self.employee_id,
                 month=month,
@@ -855,22 +832,19 @@ class Attendance(HorillaModel):
                 },
             )
 
-            ot.hour_account_second = hour_account_second
-            ot.hour_pending_second = hour_pending_second
-            ot.overtime_second = overtime_second
-            ot.worked_hours = format_time(hour_account_second)
-            ot.pending_hours = format_time(hour_pending_second)
-            ot.overtime = format_time(overtime_second)
-            ot.save(
-                update_fields=[
-                    "hour_account_second",
-                    "hour_pending_second",
-                    "overtime_second",
-                    "worked_hours",
-                    "pending_hours",
-                    "overtime",
-                ]
+            AttendanceOverTime.objects.filter(pk=ot.pk).update(
+                hour_account_second=F("hour_account_second") + diff_work,
+                overtime_second=F("overtime_second") + diff_approved_ot,
+                hour_pending_second=F("hour_pending_second") + diff_pending,
             )
+
+            ot.refresh_from_db(
+                fields=["hour_account_second", "hour_pending_second", "overtime_second"]
+            )
+            ot.worked_hours = format_time(ot.hour_account_second or 0)
+            ot.pending_hours = format_time(ot.hour_pending_second or 0)
+            ot.overtime = format_time(ot.overtime_second or 0)
+            ot.save(update_fields=["worked_hours", "pending_hours", "overtime"])
 
     def serialize(self):
         """

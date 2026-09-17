@@ -93,6 +93,7 @@
                                             <div class="oh-sticky-table__th">{% trans "Out Date" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Shift" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Work Type" %}</div>
+                                            <div class="oh-sticky-table__th">{% trans "Work Location" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Min Hour" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "At Work" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Pending Hours" %}</div>
@@ -159,6 +160,13 @@
                                                     {{ attendance.work_type_id }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
+                                                    {% if attendance.work_location == "wfh" %}
+                                                        {% trans "Work From Home" %}
+                                                    {% else %}
+                                                        {% trans "On-site" %}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="oh-sticky-table__td">
                                                     {{ attendance.minimum_hour }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
@@ -172,6 +180,18 @@
                                                 </div>
                                                 <div class="oh-sticky-table__td">
                                                     <div class="oh-btn-group">
+                                                        {% if request.user.is_superuser or "HR Manager" in request.user|company_user_groups %}
+                                                            <a
+                                                                hx-get="{% url 'attendance-work-location-update' attendance.id %}"
+                                                                hx-target="#objectUpdateModalTarget"
+                                                                hx-swap="innerHTML"
+                                                                data-toggle="oh-modal-toggle"
+                                                                data-target="#objectUpdateModal"
+                                                                onclick="event.stopPropagation()"
+                                                                class="oh-btn oh-btn--light-bkg w-100"
+                                                                title="{% trans 'Work Location' %}"
+                                                            ><ion-icon name="home-outline"></ion-icon></a>
+                                                        {% endif %}
                                                         {% if perms.attendance.change_attendance or request.user|is_reportingmanager %}
                                                             <a
                                                                 hx-get="{% url 'attendance-update' attendance.id %}?opage={{overtime_attendances.number}}&{{attendance_list.dynamic_name}}={{ attendance_list.list.number }}"
@@ -399,6 +419,7 @@
                                             <div class="oh-sticky-table__th">{% trans "Out Date" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Shift" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Work Type" %}</div>
+                                            <div class="oh-sticky-table__th">{% trans "Work Location" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Min Hour" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "At Work" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Pending Hours" %}</div>
@@ -464,6 +485,13 @@
                                                     {{ attendance.work_type_id }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
+                                                    {% if attendance.work_location == "wfh" %}
+                                                        {% trans "Work From Home" %}
+                                                    {% else %}
+                                                        {% trans "On-site" %}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="oh-sticky-table__td">
                                                     {{ attendance.minimum_hour }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
@@ -477,6 +505,18 @@
                                                 </div>
                                                 <div class="oh-sticky-table__td">
                                                     <div class="oh-btn-group">
+                                                        {% if request.user.is_superuser or "HR Manager" in request.user|company_user_groups %}
+                                                            <a
+                                                                hx-get="{% url 'attendance-work-location-update' attendance.id %}"
+                                                                hx-target="#objectUpdateModalTarget"
+                                                                hx-swap="innerHTML"
+                                                                data-toggle="oh-modal-toggle"
+                                                                data-target="#objectUpdateModal"
+                                                                onclick="event.stopPropagation()"
+                                                                class="oh-btn oh-btn--light-bkg w-100"
+                                                                title="{% trans 'Work Location' %}"
+                                                            ><ion-icon name="home-outline"></ion-icon></a>
+                                                        {% endif %}
                                                         {% if perms.attendance.change_attendance or request.user|is_reportingmanager %}
                                                             <a
                                                                 hx-get="{% url 'attendance-update' attendance.id %}?vpage={{validate_attendances.number}}&{{attendance_list.dynamic_name}}={{ attendance_list.list.number }}"
@@ -693,6 +733,7 @@
                                             <div class="oh-sticky-table__th">{% trans "Out Date" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Shift" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Work Type" %}</div>
+                                            <div class="oh-sticky-table__th">{% trans "Work Location" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Min Hour" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "At Work" %}</div>
                                             <div class="oh-sticky-table__th">{% trans "Pending Hours" %}</div>
@@ -759,6 +800,13 @@
                                                     {{ attendance.work_type_id }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
+                                                    {% if attendance.work_location == "wfh" %}
+                                                        {% trans "Work From Home" %}
+                                                    {% else %}
+                                                        {% trans "On-site" %}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="oh-sticky-table__td">
                                                     {{ attendance.minimum_hour }}
                                                 </div>
                                                 <div class="oh-sticky-table__td">
@@ -772,6 +820,18 @@
                                                 </div>
                                                 <div class="oh-sticky-table__td oh-sticky-table__right">
                                                     <div class="oh-btn-group">
+                                                        {% if request.user.is_superuser or "HR Manager" in request.user|company_user_groups %}
+                                                            <a
+                                                                hx-get="{% url 'attendance-work-location-update' attendance.id %}"
+                                                                hx-target="#objectUpdateModalTarget"
+                                                                hx-swap="innerHTML"
+                                                                data-toggle="oh-modal-toggle"
+                                                                data-target="#objectUpdateModal"
+                                                                onclick="event.stopPropagation()"
+                                                                class="oh-btn oh-btn--light-bkg w-100"
+                                                                title="{% trans 'Work Location' %}"
+                                                            ><ion-icon name="home-outline"></ion-icon></a>
+                                                        {% endif %}
                                                         {% if perms.attendance.change_attendance or request.user|is_reportingmanager %}
                                                             <a
                                                                 hx-get="{% url 'attendance-update' attendance.id %}"

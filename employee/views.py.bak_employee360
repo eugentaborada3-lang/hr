@@ -29,7 +29,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Avg, Count, F, ProtectedError, Q, Sum
+from django.db.models import F, ProtectedError, Q
 from django.db.models.query import QuerySet
 from django.forms import DateInput, HiddenInput, Select
 from django.http import HttpResponse, JsonResponse
@@ -46,9 +46,6 @@ from accessibility.decorators import enter_if_accessible
 from accessibility.methods import update_employee_accessibility_cache
 from accessibility.middlewares import ACCESSIBILITY_CACHE_USER_KEYS
 from accessibility.models import DefaultAccessibility
-from base.auth_backends import get_user_groups_for_company
-from horilla.horilla_middlewares import get_selected_company
-
 from base.forms import ModelForm
 from base.methods import (
     choosesubordinates,
@@ -105,12 +102,6 @@ from employee.methods.methods import (
     set_initial_password,
     valid_import_file_headers,
 )
-from attendance.models import Attendance, WorkRecords
-
-from pms.models import EmployeeObjective
-from leave.models import LeaveRequest
-
-
 from employee.models import (
     BonusPoint,
     Employee,
@@ -410,41 +401,6 @@ def about_tab(request, pk, **kwargs):
     employee_leaves = (
         employee.available_leave.all() if apps.is_installed("leave") else None
     )
-    today = timezone.localdate()
-    month_start = today.replace(day=1)
-    attendance_qs = Attendance.objects.filter(employee_id=employee, attendance_date__range=(month_start, today))
-    open_goals = EmployeeObjective.objects.filter(employee_id=employee, archive=False).exclude(status="Closed").count()
-    goal_progress = int(EmployeeObjective.objects.filter(employee_id=employee, archive=False).exclude(status="Closed").aggregate(avg_progress=Avg("progress_percentage"))["avg_progress"] or 0)
-
-    selected_company = get_selected_company()
-    is_hr_manager = request.user.is_superuser or get_user_groups_for_company(request.user, selected_company).filter(name="HR Manager").exists()
-
-
-    pending_leave = LeaveRequest.objects.filter(employee_id=employee, status="requested").count()
-    remaining_leave = LeaveRequest._meta.apps.get_model("leave", "AvailableLeave").objects.filter(employee_id=employee).aggregate(total=Sum("available_days"))["total"] or 0
-    remaining_leave = round(float(remaining_leave), 1)
-
-
-    present_days = WorkRecords.objects.filter(employee_id=employee, date__range=(month_start, today), work_record_type="FDP").count()
-    half_days = WorkRecords.objects.filter(employee_id=employee, date__range=(month_start, today), work_record_type="HDP").count()
-    from datetime import time as dt_time
-    overtime_seconds = 0
-    approved_overtime_seconds = 0
-    for record in attendance_qs.values("attendance_clock_out", "attendance_clock_out_date", "attendance_date", "attendance_overtime_approve"):
-        if record["attendance_clock_out"]:
-            out_date = record["attendance_clock_out_date"] or record["attendance_date"]
-            overtime_start = datetime.combine(out_date, dt_time(18, 0))
-            checkout_dt = datetime.combine(out_date, record["attendance_clock_out"])
-            if checkout_dt > overtime_start:
-                record_overtime_seconds = int((checkout_dt - overtime_start).total_seconds())
-                overtime_seconds += record_overtime_seconds
-                if record["attendance_overtime_approve"]:
-                    approved_overtime_seconds += record_overtime_seconds
-    overtime_label = f"{overtime_seconds // 3600}h {(overtime_seconds % 3600) // 60:02d}m"
-    approved_overtime_label = f"{approved_overtime_seconds // 3600}h {(approved_overtime_seconds % 3600) // 60:02d}m"
-
-
-
     bank_details = EmployeeBankDetails.objects.filter(employee_id=employee).first()
     work_info = EmployeeWorkInformation.objects.filter(employee_id=employee).first()
     return render(
@@ -456,14 +412,6 @@ def about_tab(request, pk, **kwargs):
             "contracts": contracts,
             "bank_details": bank_details,
             "work_info": work_info,
-            "present_days": present_days,
-            "half_days": half_days,
-            "open_goals": open_goals,
-            "goal_progress": goal_progress,
-            "pending_leave": pending_leave,
-            "remaining_leave": remaining_leave,
-            "overtime_label": overtime_label,
-            "approved_overtime_label": approved_overtime_label,
         },
     )
 

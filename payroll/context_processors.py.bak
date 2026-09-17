@@ -11,31 +11,15 @@ from payroll.models.models import Deduction
 
 def default_currency(request):
     """
-    Return the currency configuration for the selected company.
-
-    This context processor must never fail just because PayrollSettings
-    has not been configured yet.
+    This method will return the currency
     """
-    selected_company = getattr(request, "selected_company_instance", None)
-
-    settings = None
-
-    if selected_company is not None:
-        settings = (
-            models.PayrollSettings.objects.filter(
-                company_id=selected_company
-            ).first()
-        )
-
-    if settings is None:
-        settings = (
-            models.PayrollSettings.objects.filter(company_id__isnull=True)
-            .first()
-        )
-
-    symbol = getattr(settings, "currency_symbol", None) or "$"
-    position = getattr(settings, "position", None) or "postfix"
-
+    if models.PayrollSettings.objects.first() is None:
+        settings = models.PayrollSettings()
+        settings.currency_symbol = "$"
+        settings.company_id = getattr(request, "selected_company_instance", None)
+        settings.save()
+    symbol = models.PayrollSettings.objects.first().currency_symbol
+    position = models.PayrollSettings.objects.first().position
     return {
         "currency": request.session.get("currency", symbol),
         "position": request.session.get("position", position),
