@@ -36,6 +36,43 @@ services:
       retries: 5
       start_period: 60s
 
+  scheduler:
+    # Explicit opt-in: ordinary `docker compose up` must not activate HR jobs.
+    profiles: ["scheduler"]
+    extends:
+      service: web
+    ports: !reset []
+    command: ["python", "manage.py", "run_scheduler"]
+    environment:
+      - SCHEDULER_ONLY=1
+    depends_on:
+      web:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    stop_grace_period: 5m
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "scheduler_health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+
+  nginx:
+    image: nginx:alpine
+    profiles: ["production"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - staticfiles:/static:ro
+    depends_on:
+      web:
+        condition: service_healthy
+
   db:
     restart: unless-stopped
     image: postgres:16-alpine

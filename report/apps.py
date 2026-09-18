@@ -20,9 +20,5 @@ class ReportConfig(AppConfig):
             import report.metrics  # noqa: F401
         except Exception:
             pass
-        try:
-            import report.scheduler  # noqa: F401
-        except Exception:
-            pass
 
         return ready

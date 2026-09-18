@@ -605,7 +605,7 @@ class SubscriptionDeliveryTests(SimpleTestCase):
             sys.argv = ["manage.py", "test", "report.tests"]
             self.assertFalse(sched._should_start_scheduler())
             sys.argv = ["manage.py", "runserver"]
-            self.assertTrue(sched._should_start_scheduler())
+            self.assertFalse(sched._should_start_scheduler())
         finally:
             sys.argv = original
 

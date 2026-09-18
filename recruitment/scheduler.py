@@ -1,12 +1,8 @@
 import calendar
 import datetime as dt
-import sys
 from datetime import datetime, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from dateutil.relativedelta import relativedelta
-
-today = datetime.now()
 
 
 def recruitment_close():
@@ -16,7 +12,7 @@ def recruitment_close():
     """
     from recruitment.models import Recruitment
 
-    today_date = today.date()
+    today_date = datetime.now().date()
 
     recruitments = Recruitment.objects.filter(closed=False)
 
@@ -46,17 +42,3 @@ def candidate_convert():
         email__in=existing_emails,
         converted=False,
     ).update(converted=True)
-
-
-if not any(
-    cmd in sys.argv
-    for cmd in ["makemigrations", "migrate", "compilemessages", "flush", "shell"]
-):
-    """
-    Initializes and starts background tasks using APScheduler when the server is running.
-    """
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(candidate_convert, "interval", minutes=5)
-    scheduler.add_job(recruitment_close, "interval", hours=1)
-
-    scheduler.start()

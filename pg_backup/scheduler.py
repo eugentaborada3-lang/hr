@@ -32,7 +32,7 @@ Logging format and handlers can be customized via `LOGGING_CONFIG` in this modul
 
 Usage:
 ------
-This module is automatically executed when imported (e.g., from Django AppConfig's `ready()`).
+Schedules are registered only by manage.py run_scheduler when this app is installed.
 Backups can also be triggered manually by calling `backup_postgres()`.
 
 """
@@ -46,7 +46,6 @@ import subprocess
 from pathlib import Path
 
 import environ
-from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
 
 # === Logging Configuration ===
@@ -134,34 +133,3 @@ else:
             logger.error("Backup failed: %s", e)
         finally:
             os.environ.pop("PGPASSWORD", None)
-
-    def start():
-        """
-        Start the scheduler
-        """
-        if not BACKUP_CRON_TIMES:
-            logger.warning("BACKUP_CRON_TIMES not set. Scheduler is disabled.")
-            return
-
-        scheduler = BackgroundScheduler()
-        times = [t.strip() for t in BACKUP_CRON_TIMES.split(",")]
-
-        for time_str in times:
-            try:
-                hour, minute = map(int, time_str.split(":"))
-                scheduler.add_job(
-                    backup_postgres,
-                    "cron",
-                    hour=hour,
-                    minute=minute,
-                    id=f"backup_{hour}_{minute}",
-                    replace_existing=True,
-                )
-                logger.info("Backup scheduled at %02d:%02d", hour, minute)
-            except ValueError:
-                logger.error("Invalid time format in BACKUP_CRON_TIMES: '%s'", time_str)
-
-        scheduler.start()
-
-    # Start the scheduler
-    start()

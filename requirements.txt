@@ -62,7 +62,7 @@ swapper
 whitenoise==6.9.0
 
 # Background tasks
-APScheduler
+APScheduler>=3.11,<4
 
 # Date & time
 python-dateutil

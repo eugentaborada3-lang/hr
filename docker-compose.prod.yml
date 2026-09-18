@@ -12,7 +12,7 @@ services:
   web:
     env_file:
       - .env
-    environment: !override
+    environment: !override &production_environment
       DEBUG: "0"
       HORILLA_ENV: production
       DB_HOST: db
@@ -30,6 +30,16 @@ services:
       - media:/app/media
     ports: !override
       - "8000:8000"
+
+  scheduler:
+    env_file:
+      - .env
+    environment: !override
+      <<: *production_environment
+      SCHEDULER_ONLY: "1"
+    volumes: !override
+      - staticfiles:/app/staticfiles
+      - media:/app/media
 
   db:
     environment:

@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 from notifications.signals import notify
 
@@ -35,13 +33,3 @@ def cyclic_feedback_creation():
             feedback.save()
 
     return
-
-
-scheduler = BackgroundScheduler()
-cron_trigger = CronTrigger(hour=8)
-grace_time_seconds = int(timedelta(days=1).total_seconds())
-scheduler.add_job(
-    cyclic_feedback_creation, cron_trigger, misfire_grace_time=grace_time_seconds
-)
-
-scheduler.start()

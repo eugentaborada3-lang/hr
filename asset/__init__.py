@@ -1,1 +1,1 @@
-from asset import scheduler
+# Recurring jobs are owned by manage.py run_scheduler.

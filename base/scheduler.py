@@ -1,9 +1,8 @@
 import calendar
-import sys
 from datetime import date, datetime, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from django.urls import reverse
+from dateutil.relativedelta import relativedelta
 
 from notifications.signals import notify
 
@@ -225,7 +224,7 @@ def rotate_shift():
     rotating_shifts = RotatingShiftAssign.objects.filter(is_active=True)
     today = datetime.now().date()
     r_shifts = rotating_shifts.filter(start_date__lte=today)
-    rotating_shifts_modified = None
+    rotating_shifts_modified = rotating_shifts.none()
     for r_shift in r_shifts:
         emp_shift = rotating_shifts.filter(
             employee_id=r_shift.employee_id, start_date__lte=today
@@ -418,8 +417,8 @@ def recurring_holiday():
     for recurring_holiday in recurring_holidays:
         start_date = recurring_holiday.start_date
         end_date = recurring_holiday.end_date
-        new_start_date = date(start_date.year + 1, start_date.month, start_date.day)
-        new_end_date = date(end_date.year + 1, end_date.month, end_date.day)
+        new_start_date = start_date + relativedelta(years=1)
+        new_end_date = end_date + relativedelta(years=1) if end_date else None
         # Checking that end date is not none
         if end_date is None:
             # checking if that start date is day before today
@@ -456,70 +455,3 @@ def sync_roster_shifts():
                 work_info.save(update_fields=["shift_id"])
         except Exception:
             pass
-
-
-if not any(
-    cmd in sys.argv
-    for cmd in ["makemigrations", "migrate", "compilemessages", "flush", "shell"]
-):
-    scheduler = BackgroundScheduler()
-
-    # Add jobs with next_run_time set to the end of the previous job
-    try:
-        scheduler.add_job(rotate_shift, "interval", hours=4, id="job1")
-    except:
-        pass
-
-    try:
-        scheduler.add_job(
-            rotate_work_type,
-            "interval",
-            hours=4,
-            id="job2",
-        )
-    except:
-        pass
-
-    try:
-        scheduler.add_job(
-            undo_shift,
-            "interval",
-            hours=4,
-            id="job3",
-        )
-    except:
-        pass
-
-    try:
-        scheduler.add_job(
-            switch_shift,
-            "interval",
-            hours=4,
-            id="job4",
-        )
-    except:
-        pass
-
-    try:
-        scheduler.add_job(
-            undo_work_type,
-            "interval",
-            hours=4,
-            id="job6",
-        )
-    except:
-        pass
-
-    try:
-        scheduler.add_job(
-            switch_work_type,
-            "interval",
-            hours=4,
-            id="job5",
-        )
-    except:
-        pass
-
-    scheduler.add_job(recurring_holiday, "interval", hours=4)
-    scheduler.add_job(sync_roster_shifts, "interval", hours=4)
-    scheduler.start()

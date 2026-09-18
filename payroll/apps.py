@@ -20,7 +20,7 @@ class PayrollConfig(AppConfig):
         from django.urls import include, path
 
         from horilla.urls import urlpatterns
-        from payroll import scheduler, signals
+        from payroll import signals
 
         settings.APPS.append("payroll")
         urlpatterns.append(

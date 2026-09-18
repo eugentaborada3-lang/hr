@@ -1,26 +1,12 @@
 """
-APScheduler bootstrap for standard report subscriptions.
-
-Copy pattern from payroll/scheduler.py — BackgroundScheduler with argv guards.
+Report subscription job functions. Scheduling is owned by run_scheduler.
 """
 
 from __future__ import annotations
 
 import logging
-import sys
 
 logger = logging.getLogger(__name__)
-
-_SKIP_ARGV = (
-    "makemigrations",
-    "migrate",
-    "compilemessages",
-    "flush",
-    "shell",
-    "test",
-    "collectstatic",
-)
-
 
 def run_report_subscriptions():
     """Hourly poll entrypoint used by APScheduler."""
@@ -42,24 +28,4 @@ def run_report_subscriptions():
 
 
 def _should_start_scheduler() -> bool:
-    return not any(cmd in sys.argv for cmd in _SKIP_ARGV)
-
-
-if _should_start_scheduler():
-    try:
-        from apscheduler.schedulers.background import BackgroundScheduler
-
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(
-            run_report_subscriptions,
-            "interval",
-            hours=1,
-            id="report_subscriptions",
-            replace_existing=True,
-            max_instances=1,
-            coalesce=True,
-        )
-        scheduler.start()
-        logger.info("Report subscription scheduler started (hourly)")
-    except Exception:
-        logger.exception("Could not start report subscription scheduler")
+    return False  # Only manage.py run_scheduler starts recurring jobs.

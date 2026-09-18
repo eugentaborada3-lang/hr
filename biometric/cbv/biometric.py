@@ -5,7 +5,6 @@ This page handles the cbv methods for Biometric app
 from typing import Any
 from venv import logger
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse
@@ -267,13 +266,6 @@ class BiometricSheduleForm(HorillaFormView):
                         device.is_scheduler = True
                         device.is_live = False
                         device.save()
-                        scheduler = BackgroundScheduler()
-                        scheduler.add_job(
-                            lambda: zk_biometric_attendance_scheduler(device.id),
-                            "interval",
-                            seconds=str_time_seconds(device.scheduler_duration),
-                        )
-                        scheduler.start()
                         return HorillaRedirect(self.request)
                     except Exception as error:
                         logger.error(
@@ -300,13 +292,6 @@ class BiometricSheduleForm(HorillaFormView):
                     device.is_scheduler = True
                     device.scheduler_duration = duration
                     device.save()
-                    scheduler = BackgroundScheduler()
-                    scheduler.add_job(
-                        lambda: anviz_biometric_attendance_scheduler(device.id),
-                        "interval",
-                        seconds=str_time_seconds(device.scheduler_duration),
-                    )
-                    scheduler.start()
                     return HorillaRedirect(self.request)
                 else:
                     duration = self.request.POST.get("scheduler_duration")
@@ -314,17 +299,10 @@ class BiometricSheduleForm(HorillaFormView):
                     device.is_live = False
                     device.scheduler_duration = duration
                     device.save()
-                    scheduler = BackgroundScheduler()
                     existing_thread = settings.BIO_DEVICE_THREADS.get(device.id)
                     if existing_thread:
                         existing_thread.stop()
                         del settings.BIO_DEVICE_THREADS[device.id]
-                    scheduler.add_job(
-                        lambda: cosec_biometric_attendance_scheduler(device.id),
-                        "interval",
-                        seconds=str_time_seconds(device.scheduler_duration),
-                    )
-                    scheduler.start()
                     return HorillaRedirect(self.request)
             # else:
             #     message = _("Biometric device added successfully.")

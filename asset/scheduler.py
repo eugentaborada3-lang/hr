@@ -4,13 +4,22 @@ scheduler.py
 This module is used to register scheduled tasks
 """
 
-import sys
 from datetime import date, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from django.urls import reverse
 
 from notifications.signals import notify
+
+
+def _notify_expiry_once(sender, *, recipient, expiry_key, **kwargs):
+    """Durable per-object/expiry deduplication under the scheduler execution lock."""
+    from notifications.models import Notification
+
+    if not sender or not recipient:
+        return
+    if Notification.objects.filter(recipient=recipient, data__expiry_key=expiry_key).exists():
+        return
+    notify.send(sender, recipient=recipient, expiry_key=expiry_key, **kwargs)
 
 
 def notify_expiring_assets():
@@ -39,9 +48,10 @@ def notify_expiring_assets():
             notify_date = expiry_date - timedelta(days=asset.notify_before)
             recipient = getattr(asset.owner, "employee_user_id", None) or superuser
             if notify_date == today and recipient:
-                notify.send(
+                _notify_expiry_once(
                     bot,
                     recipient=recipient,
+                    expiry_key=f"asset:{asset.pk}:{expiry_date.isoformat()}",
                     verb=f"The Asset '{asset.asset_name}' expires in {asset.notify_before} days",
                     verb_ar=f"تنتهي صلاحية الأصل '{asset.asset_name}' خلال {asset.notify_before} من الأيام",
                     verb_de=f"Das Asset {asset.asset_name} läuft in {asset.notify_before} Tagen ab.",
@@ -85,9 +95,10 @@ def notify_expiring_documents():
             notify_date = expiry_date - timedelta(days=document.notify_before)
 
             if notify_date == today:
-                notify.send(
+                _notify_expiry_once(
                     bot,
                     recipient=document.employee_id.employee_user_id,
+                    expiry_key=f"document:{document.pk}:{expiry_date.isoformat()}",
                     verb=f"The document ' {document.title} ' expires in {document.notify_before}\
                         days",
                     verb_ar=f"تنتهي صلاحية المستند '{document.title}' خلال {document.notify_before}\
@@ -104,14 +115,4 @@ def notify_expiring_documents():
                 )
             if today >= expiry_date:
                 document.is_active = False
-
-
-if not any(
-    cmd in sys.argv
-    for cmd in ["makemigrations", "migrate", "compilemessages", "flush", "shell"]
-):
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(notify_expiring_assets, "interval", days=1)
-    scheduler.add_job(notify_expiring_documents, "interval", hours=4)
-    scheduler.add_job(mark_expired_assets, "interval", days=1)
-    scheduler.start()
+                document.save(update_fields=["is_active"])

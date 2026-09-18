@@ -20,7 +20,7 @@ class AttendanceConfig(AppConfig):
         from django.conf import settings
         from django.urls import include, path
 
-        from attendance import scheduler, signals
+        from attendance import signals
         from horilla.settings import MIDDLEWARE
         from horilla.urls import urlpatterns
 

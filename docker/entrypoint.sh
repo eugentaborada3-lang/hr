@@ -42,6 +42,12 @@ case "${SECRET_KEY:-}" in
     ;;
 esac
 
+# Scheduler shares the web image and secrets, but never migrates or collects
+# static assets. Compose waits for healthy web (and therefore its migrations).
+if [ "${SCHEDULER_ONLY:-0}" = "1" ]; then
+  exec "$@"
+fi
+
 # Run migrations
 python manage.py migrate --noinput
 
