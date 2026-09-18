@@ -19,8 +19,8 @@ services:
       - DEBUG=1
       - DB_HOST=db
       - SECRET_KEY=dev-secret-key-change-in-production
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,172.16.16.111
-      - CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://172.16.16.111:8000
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,172.16.16.111,hr.local
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://172.16.16.111:8000,http://hr.local
       - DATABASE_URL=postgres://horilla_user:horilla_pass@db:5432/horilla_db
       - DB_INIT_PASSWORD=dev-init-password-change-in-production
       - REDIS_URL=redis://:horilla_pass@redis:6379/0
